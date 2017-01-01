@@ -4,7 +4,23 @@
  -}
 module Main where
 
+import qualified Network.Socket as S
+
 import Network.Dns
+import Options
 
 main :: IO ()
-main = putStrLn "h-dns"
+main = do
+
+  opts <- getOptions
+
+  let config = Config {
+      server = dnsServer opts
+    , port = 53
+  }
+
+  let message = defaultMessage (domain opts)
+
+  msg <- query config message
+
+  putStrLn $ show msg

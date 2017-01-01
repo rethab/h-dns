@@ -1,5 +1,21 @@
 module Network.Dns.Serialization where
 
+import Data.Binary.Get (runGet, skip)
+import Data.Binary.Put (runPut)
+import Data.Binary.Bits.Get
+import Data.Binary.Bits.Put
+
+import Data.Word (Word8, Word16, Word32)
+import Data.Text (Text)
+import Data.Text.Encoding (encodeUtf8, decodeUtf8)
+import Data.Monoid ((<>))
+
+import qualified Data.ByteString      as BS
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.Text            as T
+
+import Network.Dns.Types
+
 -- the original input string, passed around for label pointers
 newtype GetCtx = GetCtx LBS.ByteString
 

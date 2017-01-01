@@ -1,23 +1,38 @@
-module Network.Dns.Types (
-    Message(..)
+module Network.Dns.Types
+    (
 
-  , defaultMessage
-  ) where
+    -- * Types
+      Message(..)
+    , Header(..)
+    , Question(..)
+    , RecordType(..)
+    , RecordClass(..)
+    , ResponseCode(..)
+    , OpCode(..)
+    , RequestID(..)
+    , AuthoritativeAnswer(..)
+    , QuestionCount(..)
+    , AnswerCount(..)
+    , NameserverCount(..)
+    , AdditionalCount(..)
+    , RecursionDesired(..)
+    , RecursionAvailable(..)
+    , Truncation(..)
+    , RData(..)
+    , Z(..)
+    , ResourceRecord(..)
+    , QR(..)
+    , Ttl(..)
 
-import Data.Binary.Get (runGet, skip)
-import Data.Binary.Put (runPut)
-import Data.Binary.Bits.Get
-import Data.Binary.Bits.Put
-
-import Data.Text (Text)
-import Data.Text.Encoding (encodeUtf8, decodeUtf8)
-import Data.Monoid ((<>))
+    -- * Default Values
+    , defaultMessage
+    ) where
 
 import Data.Word (Word8, Word16, Word32)
+import Data.Text (Text)
 
 import qualified Data.ByteString      as BS
-import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Text            as T
+
 
 data Message = Message {
     header :: Header

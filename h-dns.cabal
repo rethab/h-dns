@@ -16,8 +16,13 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Network.Dns
+  other-modules:       Network.Dns.Types
+                     , Network.Dns.Network
+                     , Network.Dns.Serialization
+  default-extensions:  OverloadedStrings
   build-depends:       base >= 4.7 && < 5
                      , text >= 1
+                     , network >= 2.6
                      , bytestring >= 0.10
                      , binary >= 0.8
                      , binary-bits >= 0.5
@@ -29,7 +34,11 @@ executable h-dns-exe
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , h-dns
+                     , text
+                     , network
+                     , optparse-applicative
   default-language:    Haskell2010
+  other-modules:       Options
 
 test-suite h-dns-test
   type:                exitcode-stdio-1.0
