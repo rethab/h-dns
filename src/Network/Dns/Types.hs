@@ -33,12 +33,11 @@ import Data.Text (Text)
 
 import qualified Data.ByteString      as BS
 
-
 data Message = Message {
     header :: Header
   , questions :: [Question]
   , answers :: [ResourceRecord]
-  } deriving Show
+  } deriving (Eq, Show)
 
 data RecordType = A | NS | MD | MF | CNAME | SOA | MB | MG | MR | NULL
                 | WKS | PTR | HINFO | MINFO | MX | TXT | RP | AFSDB
@@ -51,12 +50,12 @@ data RecordType = A | NS | MD | MF | CNAME | SOA | MB | MG | MR | NULL
                 | SPF | UINFO | UID | GID | UNSPEC | NID | L32 | L64
                 | LP | EUI48 | EUI64 | TKEY | TSIG | IXFR | AXFR
                 | MAILB | MAILA | Asterisk | URI | CAA | AVC | TA | DLV
-                | UnassignedType Int | PrivateUse Int | Reserved deriving Show
+                | UnassignedType Int | PrivateUse Int | Reserved deriving (Eq, Show)
 
 data RecordClass = ReservedClass Int | Internet | Chaos | Hesiod
-                 | QClassNone | QClassAny | ReservedPrivate Int | UnassignedClass Int deriving Show
+                 | QClassNone | QClassAny | ReservedPrivate Int | UnassignedClass Int deriving (Eq, Show)
 
-newtype RequestID = RequestID Word16 deriving Show
+newtype RequestID = RequestID Word16 deriving (Eq, Show)
 data QR = Query | Response deriving (Show, Eq)
 data OpCode = StdQuery
             | InvQuery
@@ -64,12 +63,12 @@ data OpCode = StdQuery
             | NotUsed
             | Notify
             | Update
-            | ReservedOp Word8 deriving Show
-newtype AuthoritativeAnswer = AuthoritativeAnswer Bool deriving Show
-newtype Truncation = Truncation Bool deriving Show
-newtype RecursionDesired = RecursionDesired Bool deriving Show
-newtype RecursionAvailable = RecursionAvailable Bool deriving Show
-data Z = Z deriving Show
+            | ReservedOp Word8 deriving (Eq, Show)
+newtype AuthoritativeAnswer = AuthoritativeAnswer Bool deriving (Eq, Show)
+newtype Truncation = Truncation Bool deriving (Eq, Show)
+newtype RecursionDesired = RecursionDesired Bool deriving (Eq, Show)
+newtype RecursionAvailable = RecursionAvailable Bool deriving (Eq, Show)
+data Z = Z deriving (Eq, Show)
 data ResponseCode = NoError
                   | FormatError
                   | ServerFailure
@@ -81,11 +80,11 @@ data ResponseCode = NoError
                   | NxRrSet
                   | NotAuth
                   | NotZone
-                  | ReservedCode deriving Show
-newtype QuestionCount = QuestionCount { qCnt :: Int } deriving Show
-newtype AnswerCount = AnswerCount { aCnt :: Int } deriving Show
-newtype NameserverCount = NameserverCount Int deriving Show
-newtype AdditionalCount = AdditionalCount Int deriving Show
+                  | ReservedCode deriving (Eq, Show)
+newtype QuestionCount = QuestionCount { qCnt :: Int } deriving (Eq, Show)
+newtype AnswerCount = AnswerCount { aCnt :: Int } deriving (Eq, Show)
+newtype NameserverCount = NameserverCount Int deriving (Eq, Show)
+newtype AdditionalCount = AdditionalCount Int deriving (Eq, Show)
 
 data Header = Header {
     reqID :: RequestID
@@ -101,12 +100,12 @@ data Header = Header {
   , aCount :: AnswerCount
   , nsCount :: NameserverCount
   , addCount :: AdditionalCount
-} deriving Show
+} deriving (Eq, Show)
 
 
-data Question = Question Text RecordType RecordClass deriving Show
+data Question = Question Text RecordType RecordClass deriving (Eq, Show)
 
-newtype Ttl = Ttl { seconds :: Word32 } deriving Show
+newtype Ttl = Ttl { seconds :: Word32 } deriving (Eq, Show)
 data RData = AddressResource { ipv4 :: BS.ByteString }
            | Ipv6AddressResource { ipv6 :: BS.ByteString }
            | NameServerResource { authNs :: Text }
@@ -115,8 +114,8 @@ data RData = AddressResource { ipv4 :: BS.ByteString }
            | PointerResource { ptrDomainName :: Text }
            | MailExchangeResource { preference :: Int, exchange :: Text }
            | TextResource { txtData :: Text }
-           | Raw BS.ByteString deriving Show
-data ResourceRecord = ResourceRecord Text RecordType RecordClass Ttl RData deriving Show
+           | Raw BS.ByteString deriving (Eq, Show)
+data ResourceRecord = ResourceRecord Text RecordType RecordClass Ttl RData deriving (Eq, Show)
 
 
 

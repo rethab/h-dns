@@ -1,4 +1,8 @@
-module Network.Dns.Serialization where
+module Network.Dns.Serialization
+    (
+      parseMessage
+    , serializeMessage
+    ) where
 
 import Data.Binary.Get (runGet, skip)
 import Data.Binary.Put (runPut)
@@ -319,6 +323,7 @@ toRecordType x | x == 54                  = UnassignedType (fromIntegral x)
                | x >= 259   && x <= 32767 = UnassignedType (fromIntegral x)
                | x >= 32770 && x <= 65279 = UnassignedType (fromIntegral x)
                | x >= 65280 && x <= 65534 = PrivateUse (fromIntegral x)
+toRecordType x = UnassignedType (fromIntegral x)
 
 fromRecordType :: RecordType -> Word16
 fromRecordType A = 1  
