@@ -23,4 +23,4 @@ main = do
 
   msg <- query config message
 
-  putStrLn $ show msg
+  print msg

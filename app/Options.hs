@@ -29,13 +29,13 @@ parser :: Parser Options
 parser = 
   Options
     <$> (pack <$> argument str (metavar "DOMAIN"))
-    <*> (option hostParser
+    <*> option hostParser
          ( long "server"
          <> short 's'
          <> help "The DNS Server to Query"
          <> value googleDns
          <> metavar "DNS Server"
-         ))
+         )
 
 
 hostParser :: ReadM S.HostAddress
@@ -47,8 +47,8 @@ hostParser = eitherReader toIp
     split4 :: String -> Either String (String, String, String, String)
     split4 s =
       case split '.' s of
-        (a:b:c:d:[]) -> Right (a, b, c, d)
-        _            -> Left "Host must be IPv4"
+        [a,b,c,d] -> Right (a, b, c, d)
+        _         -> Left "Host must be IPv4"
 
     toHostAddr :: (String, String, String, String) -> Either String S.HostAddress
     toHostAddr (a, b, c, d) = Right $ S.tupleToHostAddress (read a, read b, read c, read d)
