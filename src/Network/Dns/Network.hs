@@ -21,9 +21,9 @@ data Config = Config  {
   }
 
 query :: Config -> Message -> IO Message
-query (Config server port) msg = do
+query cfg msg = do
   s <- socket AF_INET Datagram defaultProtocol
-  _ <- connect s (SockAddrInet port server)
+  _ <- connect s (SockAddrInet (port cfg) (server cfg))
   _ <- sendAll s (serializeMessage msg)
   parseMessage <$> recv s 1024
 

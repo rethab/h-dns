@@ -33,29 +33,27 @@ printTech (Message h _ as) =
 
 printTechResourceRecords :: [ResourceRecord] -> Text
 printTechResourceRecords [] = ""
-printTechResourceRecords (r: rs) = 
-       printTechResourceRecord r
-    <> "\n"
-    <> printTechResourceRecords rs
+printTechResourceRecords (r: rs) =
+    printTechResourceRecord r <> "\n" <> printTechResourceRecords rs
   where
     printTechResourceRecord :: ResourceRecord -> Text
-    printTechResourceRecord (ResourceRecord name rType rClass ttl rData) =
+    printTechResourceRecord (ResourceRecord rName rType _ ttl rData) =
       prettyType rType <> " "
-                       <> "\"" <> name <> "\""
+                       <> "\"" <> rName <> "\""
                        <> " (ttl=" <> prettyTtl ttl <> ")"
                        <> " = " <> printTechResourceData rData
 
     printTechResourceData :: RData -> Text
-    printTechResourceData (AddressResource ipv4) = prettyIpv4 ipv4
-    printTechResourceData (Ipv6AddressResource ipv6) = prettyIpv6 ipv6
-    printTechResourceData (NameServerResource authNs) = authNs
-    printTechResourceData (CNameResource name) = name
-    printTechResourceData (SOAResource masterName responsibleName serial refresh retry expire minimum) =
-      masterName <> " " <> responsibleName
-    printTechResourceData (PointerResource ptrDomainName) = ptrDomainName
-    printTechResourceData (MailExchangeResource pref exchange) =
-      T.pack (show pref) <> " " <> T.pack (show exchange)
-    printTechResourceData (TextResource txtData) = txtData
+    printTechResourceData (AddressResource ip) = prettyIpv4 ip
+    printTechResourceData (Ipv6AddressResource ip) = prettyIpv6 ip
+    printTechResourceData (NameServerResource ans) = ans
+    printTechResourceData (CNameResource cName) = cName
+    printTechResourceData (SOAResource mName respName _ _ _ _ _) =
+      mName <> " " <> respName
+    printTechResourceData (PointerResource pdName) = pdName
+    printTechResourceData (MailExchangeResource pref exchg) =
+      T.pack (show pref) <> " " <> T.pack (show exchg)
+    printTechResourceData (TextResource tData) = tData
     printTechResourceData (Raw bs) = T.pack (show $ BS.unpack bs)
 
     prettyType :: RecordType -> Text
@@ -89,11 +87,12 @@ printTechResourceRecords (r: rs) =
         group4 :: [Word8] -> [[Word8]]
         group4 [] = []
         group4 (a:b:c:d:rest) = [a, b, c, d] : group4 rest
+        group4 x = [x]
 
         printHex :: [[Word8]] -> Text
         printHex [] = ""
         printHex (x:xs) = T.pack (map toHex x) <> if null xs then "" else ":" <> printHex xs
-          where
-            toHex :: Word8 -> Char
-            toHex x | x <= 9 = head (show x)
-            toHex x          = chr $ ord 'A' + fromIntegral (x `mod` 10)
+
+        toHex :: Word8 -> Char
+        toHex x | x <= 9 = head (show x)
+        toHex x          = chr $ ord 'A' + fromIntegral (x `mod` 10)

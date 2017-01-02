@@ -4,7 +4,6 @@ module Options
     , getOptions
     )where
 
-import Control.Monad (join)
 import Data.Text (Text, pack)
 
 import Options.Applicative
@@ -56,15 +55,6 @@ hostParser = eitherReader toIp
 
 googleDns :: S.HostAddress
 googleDns = S.tupleToHostAddress (8, 8, 8, 8)
-
-google2Dns :: S.HostAddress
-google2Dns = S.tupleToHostAddress (216, 239, 34, 10)
-
-cccDns :: S.HostAddress
-cccDns = S.tupleToHostAddress (94, 45, 228, 23)
-
-yandexDns :: S.HostAddress
-yandexDns = S.tupleToHostAddress (77, 88, 8, 88)
 
 split :: Eq a => a -> [a] -> [[a]]
 split d [] = []

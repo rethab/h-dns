@@ -25,4 +25,4 @@ instance QC.Arbitrary Message where
   arbitrary = defaultMessage <$> QC.arbitrary
 
 instance QC.Arbitrary Text where
-  arbitrary = T.pack <$> QC.arbitrary
+  arbitrary = T.pack <$> QC.vectorOf 10 (QC.choose ('a', 'z'))

@@ -6,8 +6,6 @@ module Main where
 
 import qualified Data.Text.IO as T
 
-import qualified Network.Socket as S
-
 import Network.Dns
 import Network.Dns.Printer
 import Options
