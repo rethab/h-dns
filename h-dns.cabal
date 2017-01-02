@@ -21,6 +21,7 @@ library
   other-modules:       Network.Dns.Types
                      , Network.Dns.Network
   default-extensions:  OverloadedStrings
+  ghc-options:         -Wall
   build-depends:       base >= 4.7 && < 5
                      , text >= 1
                      , network >= 2.6

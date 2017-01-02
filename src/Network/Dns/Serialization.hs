@@ -9,7 +9,7 @@ import Data.Binary.Put (runPut)
 import Data.Binary.Bits.Get
 import Data.Binary.Bits.Put
 
-import Data.Word (Word8, Word16, Word32)
+import Data.Word (Word8, Word16)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
 import Data.Monoid ((<>))
@@ -31,10 +31,10 @@ parseMessage bs = runGet (runBitGet getMessage) (LBS.fromStrict bs)
   where
     getMessage :: BitGet Message
     getMessage = do
-      header <- getHeader
-      questions <- loopM (getQuestion (mkCtx bs)) (qCnt $ qCount header)
-      answers <- loopM (getResourceRecord (mkCtx bs)) (aCnt $ aCount header)
-      return (Message header questions answers)
+      h <- getHeader
+      qs <- loopM (getQuestion (mkCtx bs)) (qCnt $ qCount h)
+      as <- loopM (getResourceRecord (mkCtx bs)) (aCnt $ aCount h)
+      return (Message h qs as)
 
 -- replace with mapM ??? 
 loopM :: (Monad m) => m a -> Int -> m [a]
@@ -49,12 +49,12 @@ serializeMessage (Message h qs _) = LBS.toStrict $ runPut $ runBitPut $ do
 
 getResourceRecord :: GetCtx -> BitGet ResourceRecord
 getResourceRecord ctx = do
-  name <- getName ctx
+  rName <- getName ctx
   rType <- toRecordType <$> getWord16be 16
   rClass <- toRecordClass <$> getWord16be 16
   ttl <- Ttl . fromIntegral <$> getWord32be 32
   rData <- getRData ctx rType
-  return (ResourceRecord name rType rClass ttl rData)
+  return (ResourceRecord rName rType rClass ttl rData)
 
 getRData :: GetCtx -> RecordType -> BitGet RData
 getRData ctx rType = do
@@ -81,27 +81,25 @@ getSOAResource ctx =
               <*> (fromIntegral <$> getWord32be 32)
 
 getName :: GetCtx -> BitGet Text
-getName ctx = (T.intercalate ".") <$> getLabels ctx
+getName ctx = T.intercalate "." <$> getLabels ctx
 
 getEmail :: GetCtx -> BitGet Text
 getEmail ctx = mkEmail <$> getLabels ctx
   where
     mkEmail :: [Text] -> Text
-    mkEmail (name:domain:ts) = name <> "@" <> domain <> "." <> T.intercalate "." ts
+    mkEmail (user:domain:ts) = user <> "@" <> domain <> "." <> T.intercalate "." ts
+    mkEmail xs = "Invalid Email: " <> T.concat xs
       
 
 getLabels :: GetCtx -> BitGet [Text]
 getLabels ctx@(GetCtx bs) = labelType >>= \lt ->
   case lt of
     (SEQ 0)   -> return []
-    (SEQ len) -> do a <- decodeUtf8 <$> getByteString (fromIntegral len)
-                    bs <- getLabels ctx
-                    return (a : bs)
+    (SEQ len) -> (:) <$> (decodeUtf8 <$> getByteString (fromIntegral len)) <*> getLabels ctx
     (PNT off) -> return $ runGet (skip off >> runBitGet (getLabels ctx)) bs
 
 -- a domain name is either a sequence of labels or a pointer
-data NT = SEQ { length :: Int }
-        | PNT { offset :: Int }
+data NT = SEQ Int | PNT Int
 
 labelType :: BitGet NT
 labelType = do
@@ -120,26 +118,24 @@ getQuestion ctx =
 
 putQuestion :: Question -> BitPut ()
 putQuestion (Question qname qtype qclass) = do
-  _ <- putQname qname
+  _ <- putQname
   _ <- putWord16be 16 (fromRecordType qtype)
   _ <- putWord16be 16 (fromRecordClass qclass)
   return ()
 
   where
-    putQname :: Text -> BitPut ()
-    putQname name = do
-      _ <- mapM_ (\l -> putWord8 8 (fst l) >> putByteString (snd l)) (mkLabels qname)
-      putWord8 8 0
-    mkLabels :: Text -> [(Word8, BS.ByteString)]
-    mkLabels name = map (\ws -> (fromIntegral (T.length ws), encodeUtf8 ws)) (T.splitOn "." name)
+    putQname :: BitPut ()
+    putQname = mapM_ (\l -> putWord8 8 (fst l) >> putByteString (snd l)) mkLabels >> putWord8 8 0
+    mkLabels :: [(Word8, BS.ByteString)]
+    mkLabels = map (\ws -> (fromIntegral (T.length ws), encodeUtf8 ws)) (T.splitOn "." qname)
 
 putHeader :: Header -> BitPut ()
-putHeader (Header (RequestID reqId) qr opcode (AuthoritativeAnswer aa)
-                  (Truncation tc) (RecursionDesired rd) (RecursionAvailable ra)
+putHeader (Header (RequestID rid) quRes opcode (AuthoritativeAnswer aa)
+                  (Truncation trunc) (RecursionDesired recDes) (RecursionAvailable recAv)
                   _ rc (QuestionCount qc) (AnswerCount ac) (NameserverCount nc)
                   (AdditionalCount addc)) = do
-  _ <- putWord16be 16 reqId
-  _ <- putBool (qr == Response) 
+  _ <- putWord16be 16 rid
+  _ <- putBool (quRes == Response) 
   _ <- putWord8 4 (case opcode of
                      StdQuery     -> 0
                      InvQuery     -> 1
@@ -149,9 +145,9 @@ putHeader (Header (RequestID reqId) qr opcode (AuthoritativeAnswer aa)
                      Update       -> 5
                      ReservedOp x -> x) 
   _ <- putBool aa 
-  _ <- putBool tc
-  _ <- putBool rd
-  _ <- putBool ra
+  _ <- putBool trunc
+  _ <- putBool recDes
+  _ <- putBool recAv
   _ <- putWord8 3 0
   _ <- putWord8 4 (case rc of
                      NoError        ->  0  
@@ -174,7 +170,7 @@ putHeader (Header (RequestID reqId) qr opcode (AuthoritativeAnswer aa)
     
 
 getHeader :: BitGet Header
-getHeader = block $ do
+getHeader = block $
   Header <$> (RequestID <$> word16be 16)
          <*> ((\b -> if b then Response else Query) <$> bool)
          <*> ((\w -> case w of 
@@ -189,7 +185,7 @@ getHeader = block $ do
          <*> (Truncation <$> bool)
          <*> (RecursionDesired <$> bool)
          <*> (RecursionAvailable <$> bool)
-         <*> ((\b -> Z) <$> word8 3)
+         <*> (const Z <$> word8 3)
          <*> ((\w -> case w of
                        0 -> NoError
                        1 -> FormatError
@@ -219,7 +215,8 @@ toRecordClass x | x == 0 || x == 65535     = ReservedClass (fromIntegral x)
                 | x == 2                   = UnassignedClass (fromIntegral x)
                 | x >= 5   && x <= 253     = UnassignedClass (fromIntegral x)
                 | x >= 256 && x <= 65279   = UnassignedClass (fromIntegral x)
-                | x >= 65280 && x <= 65534 = ReservedPrivate (fromIntegral x)
+              | x >= 65280 && x <= 65534 = ReservedPrivate (fromIntegral x)
+toRecordClass   x = UnassignedClass (fromIntegral x)
 
 fromRecordClass :: RecordClass -> Word16
 fromRecordClass Internet = 1
