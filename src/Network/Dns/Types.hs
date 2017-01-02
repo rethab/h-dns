@@ -26,10 +26,12 @@ module Network.Dns.Types
 
     -- * Default Values
     , defaultMessage
+    , schrimpf -- TODO remove again
     ) where
 
 import Data.Word (Word8, Word16, Word32)
 import Data.Text (Text)
+import Prelude hiding (minimum)
 
 import qualified Data.ByteString      as BS
 
@@ -135,3 +137,49 @@ defaultHeader = Header (RequestID 1337) Query StdQuery (AuthoritativeAnswer Fals
 defaultQuestion :: Text -> Question
 defaultQuestion qname = Question qname Asterisk Internet
 
+schrimpf :: Message
+schrimpf = Message {
+    header = Header {
+        reqID = RequestID 1337
+      , qr = Response
+      , opCode = StdQuery
+      , auth = AuthoritativeAnswer False
+      , tc = Truncation False
+      , rd = RecursionDesired True
+      , ra = RecursionAvailable True
+      , z = Z
+      , respCode = NoError
+      , qCount = QuestionCount {qCnt = 1}
+      , aCount = AnswerCount {aCnt = 8}
+      , nsCount = NameserverCount 0
+      , addCount = AdditionalCount 0
+      }
+    , questions = [ Question "schrimpf.ch" Asterisk Internet]
+    , answers =
+      [   ResourceRecord "schrimpf.ch" SOA Internet Ttl {seconds = 86399}
+            SOAResource {
+                masterName = "ns1.cyon.ch"
+              , responsibleName = "server@cyon.ch"
+              , serial = 2016042314
+              , refresh = 86400
+              , retry = 7200
+              , expire = 3600000
+              , minimum = 86400
+            }
+        , ResourceRecord "schrimpf.ch" AAAA Internet Ttl {seconds = 14399} 
+            Ipv6AddressResource {
+              ipv6 = "*\SOH\EOT\248\f\ETB3\156\NUL\NUL\NUL\NUL\NUL\NUL\NUL\STX"}
+        , ResourceRecord "schrimpf.ch" A Internet Ttl {seconds = 14399}
+            AddressResource {ipv4 = "N.\152\141"}
+        , ResourceRecord "schrimpf.ch" NS Internet Ttl {seconds = 86399}
+            NameServerResource {authNs = "ns1.cyon.ch"}
+        , ResourceRecord "schrimpf.ch" NS Internet Ttl {seconds = 86399}
+            NameServerResource {authNs = "ns2.cyon.ch"}
+        , ResourceRecord "schrimpf.ch" MX Internet Ttl {seconds = 14399}
+            MailExchangeResource {preference = 0, exchange = "rhone.hostli.ch"}
+        , ResourceRecord "schrimpf.ch" TXT Internet Ttl {seconds = 14399}
+            TextResource {
+              txtData = "Ev=spf1 a mx ip4:78.46.152.141 ip6:2a01:4f8:c17:339c:0000:0000/64 -all"}
+        , ResourceRecord "schrimpf.ch" TXT Internet Ttl {seconds = 14399}
+            TextResource {
+              txtData = "Dgoogle-site-verification=PjylOPOLPicYt0EQvy-UceDl4gyKfqBUeI20Ml_br54"}]}

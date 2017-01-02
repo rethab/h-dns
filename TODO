@@ -1,3 +1,5 @@
 - handle network errors
 - pretty printer
 - tests
+- warnings for non-exhaustive matches
+- IPv6 compression in printer
